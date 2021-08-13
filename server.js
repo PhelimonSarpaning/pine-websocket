@@ -20,10 +20,16 @@ server.on("upgrade", (request, socket, head) => {
 
 const clients = [];
 
-setInterval(async () => {
-  clients.forEach((client) => {
-    const res = await getStockPrice();
-    client.send(res);
+setInterval(() => {
+  clients.forEach(async (client) => {
+    try {
+      const res = await getStockPrice();
+      //   console.log(res);
+      client.send(JSON.stringify(res));
+    } catch (e) {
+      console.log(e);
+    }
+
     // console.log(client);
   });
 }, 5000);
@@ -61,23 +67,23 @@ async function getStockPrice() {
       .then((res) => {
         resolve({
           aapl: {
-            price: res[0].data.aggregations[0].close,
+            price: parseFloat(res[0].data.aggregations[0].close).toFixed(2),
             stockName: "Apple",
           },
           goog: {
-            price: res[1].data.aggregations[0].close,
+            price: parseFloat(res[1].data.aggregations[0].close).toFixed(2),
             stockName: "Google",
           },
           fb: {
-            price: res[2].data.aggregations[0].close,
+            price: parseFloat(res[2].data.aggregations[0].close).toFixed(2),
             stockName: "Facebook",
           },
           tsla: {
-            price: res[3].data.aggregations[0].close,
+            price: parseFloat(res[3].data.aggregations[0].close).toFixed(2),
             stockName: "Tesla",
           },
           zm: {
-            price: res[4].data.aggregations[0].close,
+            price: parseFloat(res[4].data.aggregations[0].close).toFixed(2),
             stockName: "Zoom",
           },
         });
