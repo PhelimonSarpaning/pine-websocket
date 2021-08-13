@@ -1,45 +1,102 @@
-const express = require('express');
-const ws = require('ws');
-const axios = require('axios');
-const { response } = require('express');
+const express = require("express");
+const io = require("socket.io");
+const ws = require("ws");
+const axios = require("axios").default;
 
 const app = express();
 
-
 // Set up a headless websocket server that prints any
 // events that come in.
-const wsServer = new ws.Server({ noServer: true });
-wsServer.on('connection', socket => {
-  socket.on('message', symbol => {
-      const symb = symbol.toString();
-            callVendor(symb).then(
-            (response) => {
-            socket.send(JSON.stringify(response));
-            }
-        )
-    });
-});
 
 // `server` is a vanilla Node.js HTTP server, so use
-const port = process.env.PORT || 3030;
+const port = process.env.PORT || 3031;
 const server = app.listen(port);
-console.log('lictening on 3030')
-server.on('upgrade', (request, socket, head) => {
-  wsServer.handleUpgrade(request, socket, head, socket => {
-    wsServer.emit('connection', socket, request);
+console.log("listening on ", port);
+server.on("upgrade", (request, socket, head) => {
+  wsServer.handleUpgrade(request, socket, head, (socket) => {
+    wsServer.emit("connection", socket, request);
   });
 });
 
+const clients = [];
+
+setInterval(async () => {
+  clients.forEach((client) => {
+    const res = await getStockPrice();
+    client.send(res);
+    // console.log(client);
+  });
+}, 5000);
+
+const wsServer = new ws.Server({ noServer: true });
+wsServer.on("connection", (socket) => {
+  clients.push(socket);
+  //   socket.on("message", (symbol) => {
+  //     const symb = symbol.toString();
+  //     callVendor(symb).then((response) => {
+  //       socket.send(JSON.stringify(response));
+  //     });
+  //   });
+});
+
+async function getStockPrice() {
+  const aapl = axios.get(
+    "https://api.dstoq.com/core/assets/assets/AAPL/?trading_pair=USDC&time_span=LAST_HOUR"
+  );
+  const goog = axios.get(
+    "https://api.dstoq.com/core/assets/assets/GOOG/?trading_pair=USDC&time_span=LAST_HOUR"
+  );
+  const fb = axios.get(
+    "https://api.dstoq.com/core/assets/assets/FB/?trading_pair=USDC&time_span=LAST_HOUR"
+  );
+  const tsla = axios.get(
+    "https://api.dstoq.com/core/assets/assets/TSLA/?trading_pair=USDC&time_span=LAST_HOUR"
+  );
+  const zm = axios.get(
+    "https://api.dstoq.com/core/assets/assets/ZM/?trading_pair=USDC&time_span=LAST_HOUR"
+  );
+
+  return new Promise((resolve, reject) => {
+    Promise.all([aapl, goog, fb, tsla, zm])
+      .then((res) => {
+        resolve({
+          aapl: {
+            price: res[0].data.aggregations[0].close,
+            stockName: "Apple",
+          },
+          goog: {
+            price: res[1].data.aggregations[0].close,
+            stockName: "Google",
+          },
+          fb: {
+            price: res[2].data.aggregations[0].close,
+            stockName: "Facebook",
+          },
+          tsla: {
+            price: res[3].data.aggregations[0].close,
+            stockName: "Tesla",
+          },
+          zm: {
+            price: res[4].data.aggregations[0].close,
+            stockName: "Zoom",
+          },
+        });
+      })
+      .catch((err) => console.log(err));
+  });
+}
+
 async function callVendor(symbol) {
-    console.log('symbol', symbol)
-    const endpoint = 'https://api.dstoq.com/core/assets/assets/' + symbol + '/?trading_pair=USDC&time_span=LAST_HOUR'
-    try {
-        axios.get(endpoint)
-        .then((response) => {
-            console.log('agg', response.data.aggregations);
-            return response.aggregations;
-        })
-    } catch (error) {
-        return error;
-    }
+  const endpoint =
+    "https://api.dstoq.com/core/assets/assets/" +
+    symbol +
+    "/?trading_pair=USDC&time_span=LAST_HOUR";
+  try {
+    axios.get(endpoint).then((response) => {
+      //   console.log("agg", response.data.aggregations);
+      return response.aggregations;
+    });
+  } catch (error) {
+    return error;
+  }
 }
