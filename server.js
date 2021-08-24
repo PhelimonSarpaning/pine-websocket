@@ -68,22 +68,27 @@ async function getStockPrice() {
         resolve({
           aapl: {
             price: parseFloat(res[0].data.aggregations[0].close).toFixed(2),
+            open: parseFloat(res[0].data.aggregations[0].open).toFixed(2),
             stockName: "Apple",
           },
           goog: {
             price: parseFloat(res[1].data.aggregations[0].close).toFixed(2),
+            open: parseFloat(res[1].data.aggregations[0].open).toFixed(2),
             stockName: "Google",
           },
           fb: {
             price: parseFloat(res[2].data.aggregations[0].close).toFixed(2),
+            open: parseFloat(res[2].data.aggregations[0].open).toFixed(2),
             stockName: "Facebook",
           },
           tsla: {
             price: parseFloat(res[3].data.aggregations[0].close).toFixed(2),
+            open: parseFloat(res[3].data.aggregations[0].open).toFixed(2),
             stockName: "Tesla",
           },
           zm: {
             price: parseFloat(res[4].data.aggregations[0].close).toFixed(2),
+            open: parseFloat(res[4].data.aggregations[0].open).toFixed(2),
             stockName: "Zoom",
           },
         });
